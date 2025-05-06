@@ -1,0 +1,47 @@
+groups:
+- name: InventoryServiceAlerts
+  rules:
+  - alert: HighRequestLatency
+    expr: http_server_requests_seconds_max{job="inventory-service"} > 0.5
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High request latency on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a request latency above 500ms (current value: {{ $value }}s)"
+
+  - alert: InstanceDown
+    expr: up{job="inventory-service"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+  - alert: HighCPUUsage
+    expr: process_cpu_usage{job="inventory-service"} > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a CPU usage above 80% (current value: {{ $value }})"
+
+  - alert: HighMemoryUsage
+    expr: sum(jvm_memory_used_bytes{job="inventory-service"}) / sum(jvm_memory_max_bytes{job="inventory-service"}) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has memory usage above 80% (current value: {{ $value }})"
+
+  - alert: ErrorRateHigh
+    expr: sum(rate(http_server_requests_seconds_count{status=~"5..",job="inventory-service"}[5m])) / sum(rate(http_server_requests_seconds_count{job="inventory-service"}[5m])) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate on {{ $labels.instance }}"
+      description: "Error rate is above 5% (current value: {{ $value }})"
